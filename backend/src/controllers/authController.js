@@ -34,6 +34,18 @@ async function register(req, res) {
     );
 
     const user = result.rows[0];
+
+    // Automatically provision a default vehicle for drivers so real-time tracking works immediately
+    if (role === 'driver') {
+      const plateNumber = `ENU-${Math.floor(100 + Math.random() * 900)}-WM`;
+      await pool.query(
+        `INSERT INTO vehicles (plate_number, driver_id, zone, status)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (plate_number) DO NOTHING`,
+        [plateNumber, user.user_id, 'Enugu Central', 'Active']
+      );
+    }
+
     const token = signToken({ userId: user.user_id, role: user.role, fullName: user.full_name });
 
     return res.status(201).json({ token, user });
