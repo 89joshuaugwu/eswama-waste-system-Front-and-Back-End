@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [assigning, setAssigning] = useState(false);
   const [message, setMessage] = useState('');
   const [mapCenter, setMapCenter] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'users'
 
   // User Management State
   const [users, setUsers] = useState([]);
@@ -31,7 +32,7 @@ export default function AdminDashboard() {
 
   async function loadUsers() {
     try {
-      const { data } = await api.get('/users');
+      const { data } = await api.get('/auth/users');
       setUsers(data.users);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
     setCreatingUser(true);
     setUserMsg('');
     try {
-      await api.post('/users', newUser);
+      await api.post('/auth/users', newUser);
       setUserMsg('User created successfully.');
       setNewUser({ fullName: '', email: '', phone: '', password: '', role: 'driver' });
       loadUsers();
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
   async function handleToggleUserStatus(user) {
     const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
     try {
-      await api.patch(`/users/${user.user_id}/status`, { status: newStatus });
+      await api.patch(`/auth/users/${user.user_id}/status`, { status: newStatus });
       loadUsers();
     } catch (err) {
       alert(err.response?.data?.error || 'Could not update user status.');
@@ -134,7 +135,7 @@ export default function AdminDashboard() {
   async function handleDeleteUser(user) {
     if (!window.confirm(`Are you sure you want to delete ${user.full_name}?`)) return;
     try {
-      await api.delete(`/users/${user.user_id}`);
+      await api.delete(`/auth/users/${user.user_id}`);
       loadUsers();
     } catch (err) {
       alert(err.response?.data?.error || 'Could not delete user.');
@@ -146,8 +147,32 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto p-4 grid gap-6 lg:grid-cols-3">
-        <section className="bg-white rounded-lg shadow p-4 lg:col-span-1">
+      
+      <div className="bg-white border-b">
+        <div className="max-w-6xl mx-auto px-4 flex gap-4">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`py-3 px-2 border-b-2 font-medium text-sm transition ${
+              activeTab === 'dashboard' ? 'border-eswama-green text-eswama-green' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Dashboard Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`py-3 px-2 border-b-2 font-medium text-sm transition ${
+              activeTab === 'users' ? 'border-eswama-green text-eswama-green' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Manage Drivers & Admins
+          </button>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto p-4">
+        {activeTab === 'dashboard' ? (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <section className="bg-white rounded-lg shadow p-4 lg:col-span-1">
           <h2 className="font-semibold mb-3">Pending Reports ({pendingReports.length})</h2>
           <ul className="space-y-2 max-h-[32rem] overflow-y-auto">
             {pendingReports.length === 0 && (
@@ -227,12 +252,13 @@ export default function AdminDashboard() {
                 lng: parseFloat(v.longitude),
                 label: `${v.driver_name} - ${v.plate_number} (${v.zone})`,
               }))}
-            />
-          </div>
-        </section>
-
-        {/* User Management Section */}
-        <section className="bg-white rounded-lg shadow p-4 lg:col-span-3">
+              />
+            </div>
+          </section>
+        </div>
+        ) : (
+        /* User Management Section */
+        <section className="bg-white rounded-lg shadow p-4">
           <h2 className="font-semibold mb-4 text-lg border-b pb-2">Fleet & User Management</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-1 border-r pr-4">
@@ -343,6 +369,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </section>
+        )}
       </main>
     </div>
   );
