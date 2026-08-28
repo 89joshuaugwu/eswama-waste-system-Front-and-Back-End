@@ -80,18 +80,7 @@ export default function Register() {
               className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-eswama-green"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Account Type</label>
-            <select
-              value={form.role}
-              onChange={(e) => update('role', e.target.value)}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-eswama-green"
-            >
-              <option value="resident">Resident</option>
-              <option value="driver">Driver / Collector</option>
-              <option value="admin">ESWAMA Administrator</option>
-            </select>
-          </div>
+          <input type="hidden" name="role" value="resident" />
           <button
             type="submit"
             disabled={submitting}

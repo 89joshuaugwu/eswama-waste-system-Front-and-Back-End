@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
+import MapView from '../components/MapView.jsx';
 import api from '../api/client';
 import { getSocket } from '../api/socket';
 
@@ -75,11 +76,31 @@ export default function DriverDashboard() {
 
   const activeTasks = tasks.filter((t) => t.status !== 'Completed');
 
+  const mapMarkers = [];
+  if (lastLocation) {
+    mapMarkers.push({
+      id: 'driver',
+      lat: lastLocation.latitude,
+      lng: lastLocation.longitude,
+      label: 'Your Current Location'
+    });
+  }
+  activeTasks.forEach((t) => {
+    if (t.latitude && t.longitude) {
+      mapMarkers.push({
+        id: `task-${t.task_id}`,
+        lat: parseFloat(t.latitude),
+        lng: parseFloat(t.longitude),
+        label: t.description
+      });
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-3xl mx-auto p-4 space-y-6">
-        <section className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+      <main className="max-w-6xl mx-auto p-4 grid gap-6 lg:grid-cols-2">
+        <section className="bg-white rounded-lg shadow p-4 flex items-center justify-between lg:col-span-2">
           <div>
             <h2 className="font-semibold">Location Sharing</h2>
             <p className="text-sm text-gray-500">
@@ -98,9 +119,19 @@ export default function DriverDashboard() {
           </button>
         </section>
 
-        <section className="bg-white rounded-lg shadow p-4">
+        <section className="bg-white rounded-lg shadow p-4 lg:col-span-1 h-[28rem] lg:h-auto">
+          <h2 className="font-semibold mb-3">Your Route Map</h2>
+          <div className="h-[calc(100%-2rem)] rounded-lg overflow-hidden">
+            <MapView
+              center={lastLocation ? [lastLocation.latitude, lastLocation.longitude] : null}
+              markers={mapMarkers}
+            />
+          </div>
+        </section>
+
+        <section className="bg-white rounded-lg shadow p-4 lg:col-span-1">
           <h2 className="font-semibold mb-3">Your Tasks ({activeTasks.length} active)</h2>
-          <ul className="space-y-3">
+          <ul className="space-y-3 max-h-[32rem] overflow-y-auto">
             {tasks.length === 0 && <p className="text-sm text-gray-500">No tasks assigned yet.</p>}
             {tasks.map((t) => (
               <li key={t.task_id} className="border rounded-md p-3">
@@ -113,14 +144,29 @@ export default function DriverDashboard() {
                   </span>
                 </div>
                 <p className="text-sm mb-2">{t.description}</p>
-                {NEXT_STATUS[t.status] && (
-                  <button
-                    onClick={() => handleAdvanceStatus(t)}
-                    className="text-sm bg-eswama-green text-white px-3 py-1.5 rounded-md hover:bg-green-700"
-                  >
-                    Mark as {NEXT_STATUS[t.status]}
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {NEXT_STATUS[t.status] && (
+                    <button
+                      onClick={() => handleAdvanceStatus(t)}
+                      className="flex-1 text-sm bg-eswama-green text-white px-3 py-1.5 rounded-md hover:bg-green-700"
+                    >
+                      Mark as {NEXT_STATUS[t.status]}
+                    </button>
+                  )}
+                  {t.latitude && t.longitude && (
+                    <a
+                      href={lastLocation 
+                        ? `https://www.google.com/maps/dir/?api=1&origin=${lastLocation.latitude},${lastLocation.longitude}&destination=${t.latitude},${t.longitude}`
+                        : `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 text-center flex-1"
+                    >
+                      Track on Map
+                    </a>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

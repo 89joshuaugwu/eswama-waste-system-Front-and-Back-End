@@ -12,8 +12,8 @@ async function register(req, res) {
     if (!fullName || !email || !phone || !password || !role) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
-    if (!VALID_ROLES.includes(role)) {
-      return res.status(400).json({ error: `Role must be one of: ${VALID_ROLES.join(', ')}` });
+    if (role !== 'resident') {
+      return res.status(403).json({ error: 'Public registration is only allowed for residents.' });
     }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters.' });
@@ -107,4 +107,56 @@ async function me(req, res) {
   }
 }
 
-module.exports = { register, login, me };
+async function createUser(req, res) {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only administrators can create users.' });
+    }
+    
+    const { fullName, email, phone, password, role } = req.body;
+
+    if (!fullName || !email || !phone || !password || !role) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (!VALID_ROLES.includes(role)) {
+      return res.status(400).json({ error: `Role must be one of: ${VALID_ROLES.join(', ')}` });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    }
+
+    const existing = await pool.query('SELECT user_id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'An account with this email already exists.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const result = await pool.query(
+      `INSERT INTO users (full_name, email, phone, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING user_id, full_name, email, phone, role, created_at`,
+      [fullName, email, phone, passwordHash, role]
+    );
+
+    const user = result.rows[0];
+
+    // Automatically provision a default vehicle for drivers
+    if (role === 'driver') {
+      const plateNumber = `ENU-${Math.floor(100 + Math.random() * 900)}-WM`;
+      await pool.query(
+        `INSERT INTO vehicles (plate_number, driver_id, zone, status)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (plate_number) DO NOTHING`,
+        [plateNumber, user.user_id, 'Enugu Central', 'Active']
+      );
+    }
+
+    return res.status(201).json({ user });
+  } catch (err) {
+    console.error('createUser error:', err);
+    return res.status(500).json({ error: 'Could not create user.' });
+  }
+}
+
+module.exports = { register, login, me, createUser };

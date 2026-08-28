@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [suggestion, setSuggestion] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [message, setMessage] = useState('');
+  const [mapCenter, setMapCenter] = useState(null);
 
   async function loadReports() {
     const { data } = await api.get('/reports');
@@ -38,6 +39,24 @@ export default function AdminDashboard() {
       }
     };
   }, []);
+
+  function handleUseMyLocation() {
+    if (!navigator.geolocation) {
+      setMessage('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setMapCenter([latitude, longitude]);
+        setMessage('Map centered on your location.');
+      },
+      (err) => {
+        setMessage('Could not get your location. Please check your permissions.');
+      },
+      { enableHighAccuracy: true }
+    );
+  }
 
   async function handleSelectReport(report) {
     setSelectedReport(report);
@@ -102,7 +121,17 @@ export default function AdminDashboard() {
 
           {selectedReport && (
             <div className="mt-4 border-t pt-4">
-              <h3 className="font-medium text-sm mb-2">Assign Collection Task</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-sm">Assign Collection Task</h3>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${selectedReport.latitude},${selectedReport.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  View on Google Maps
+                </a>
+              </div>
               {suggestion ? (
                 <div className="text-sm space-y-2">
                   <p>
@@ -128,9 +157,18 @@ export default function AdminDashboard() {
         </section>
 
         <section className="bg-white rounded-lg shadow p-4 lg:col-span-2 h-[36rem]">
-          <h2 className="font-semibold mb-3">Live Fleet Map</h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-semibold">Live Fleet Map</h2>
+            <button
+              onClick={handleUseMyLocation}
+              className="text-xs text-eswama-green hover:underline focus:outline-none"
+            >
+              Use My Current Location
+            </button>
+          </div>
           <div className="h-[calc(100%-2rem)] rounded-lg overflow-hidden">
             <MapView
+              center={mapCenter}
               markers={vehicles.map((v) => ({
                 id: v.vehicle_id,
                 lat: parseFloat(v.latitude),

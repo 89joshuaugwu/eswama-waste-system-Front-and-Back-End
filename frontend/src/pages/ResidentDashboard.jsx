@@ -14,6 +14,7 @@ export default function ResidentDashboard() {
   const [reports, setReports] = useState([]);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState(null);
+  const [mapCenter, setMapCenter] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -33,6 +34,25 @@ export default function ResidentDashboard() {
       if (socket) socket.off('report:resolved');
     };
   }, []);
+
+  function handleUseMyLocation() {
+    if (!navigator.geolocation) {
+      setMessage('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
+        setMapCenter([latitude, longitude]);
+        setMessage('Location acquired!');
+      },
+      (err) => {
+        setMessage('Could not get your location. Please check your permissions.');
+      },
+      { enableHighAccuracy: true }
+    );
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -73,13 +93,23 @@ export default function ResidentDashboard() {
               onChange={(e) => setDescription(e.target.value)}
               className="w-full border rounded-md px-3 py-2 h-24 focus:outline-none focus:ring-2 focus:ring-eswama-green"
             />
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-xs text-gray-500">Click on the map to mark where the issue is.</p>
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                className="text-xs text-eswama-green hover:underline focus:outline-none"
+              >
+                Use My Current Location
+              </button>
+            </div>
             <div className="h-56 border rounded-lg overflow-hidden">
               <MapView
+                center={mapCenter}
                 onSelectLocation={(lat, lng) => setLocation({ lat, lng })}
                 markers={location ? [{ id: 'selected', lat: location.lat, lng: location.lng, label: 'Selected location' }] : []}
               />
             </div>
-            <p className="text-xs text-gray-500">Click on the map to mark where the issue is.</p>
             {message && <p className="text-sm text-eswama-dark">{message}</p>}
             <button
               type="submit"
