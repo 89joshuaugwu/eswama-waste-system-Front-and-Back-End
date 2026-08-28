@@ -16,16 +16,24 @@ const initSockets = require('./sockets');
 const app = express();
 const server = http.createServer(app);
 
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const rawOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = rawOrigin === '*' ? '*' : rawOrigin.includes(',') ? rawOrigin.split(',').map(s => s.trim()) : rawOrigin;
 
 const io = new Server(server, {
-  cors: { origin: CLIENT_ORIGIN, methods: ['GET', 'POST'] },
+  cors: {
+    origin: allowedOrigins === '*' ? true : allowedOrigins,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  },
 });
 
 app.set('io', io);
 
 app.use(helmet());
-app.use(cors({ origin: CLIENT_ORIGIN }));
+app.use(cors({
+  origin: allowedOrigins === '*' ? true : allowedOrigins,
+  credentials: true,
+}));
 app.use(express.json({ limit: '5mb' }));
 
 app.get('/api/health', (req, res) => {
