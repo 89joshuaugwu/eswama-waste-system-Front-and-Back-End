@@ -17,6 +17,7 @@ export default function ResidentDashboard() {
   const [mapCenter, setMapCenter] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
 
   async function loadReports() {
     const { data } = await api.get('/reports');
@@ -65,10 +66,12 @@ export default function ResidentDashboard() {
     try {
       await api.post('/reports', {
         description,
+        photoUrl,
         latitude: location.lat,
         longitude: location.lng,
       });
       setDescription('');
+      setPhotoUrl('');
       setLocation(null);
       setMessage('Report submitted successfully.');
       loadReports();
@@ -76,6 +79,21 @@ export default function ResidentDashboard() {
       setMessage(err.response?.data?.error || 'Could not submit report.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function handlePhotoChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage('Photo must be less than 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   }
 
@@ -93,6 +111,22 @@ export default function ResidentDashboard() {
               onChange={(e) => setDescription(e.target.value)}
               className="w-full border rounded-md px-3 py-2 h-24 focus:outline-none focus:ring-2 focus:ring-eswama-green"
             />
+            
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">Add a photo (optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-eswama-green file:text-white hover:file:bg-green-700"
+              />
+              {photoUrl && (
+                <div className="mt-2">
+                  <img src={photoUrl} alt="Preview" className="h-20 w-auto rounded-md object-cover" />
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-between items-center mb-2">
               <p className="text-xs text-gray-500">Click on the map to mark where the issue is.</p>
               <button
@@ -136,6 +170,9 @@ export default function ResidentDashboard() {
                   </span>
                 </div>
                 <p className="text-sm">{r.description}</p>
+                {r.photo_url && (
+                  <img src={r.photo_url} alt="Report Issue" className="mt-2 max-h-32 rounded-md object-cover" />
+                )}
               </li>
             ))}
           </ul>

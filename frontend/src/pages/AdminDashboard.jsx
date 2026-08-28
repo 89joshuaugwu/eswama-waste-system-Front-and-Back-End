@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar.jsx';
 import MapView from '../components/MapView.jsx';
 import api from '../api/client';
 import { getSocket } from '../api/socket';
+import Analytics from '../components/Analytics.jsx';
 
 export default function AdminDashboard() {
   const [reports, setReports] = useState([]);
@@ -166,6 +167,14 @@ export default function AdminDashboard() {
           >
             Manage Drivers & Admins
           </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`py-3 px-2 border-b-2 font-medium text-sm transition ${
+              activeTab === 'analytics' ? 'border-eswama-green text-eswama-green' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Analytics & Reports
+          </button>
         </div>
       </div>
 
@@ -188,6 +197,9 @@ export default function AdminDashboard() {
                 >
                   <p className="text-sm font-medium">{r.reporter_name}</p>
                   <p className="text-sm text-gray-600">{r.description}</p>
+                  {r.photo_url && (
+                    <img src={r.photo_url} alt="Report Issue" className="mt-2 max-h-32 rounded-md object-cover" />
+                  )}
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(r.reported_at).toLocaleString()}
                   </p>
@@ -256,7 +268,7 @@ export default function AdminDashboard() {
             </div>
           </section>
         </div>
-        ) : (
+        ) : activeTab === 'users' ? (
         /* User Management Section */
         <section className="bg-white rounded-lg shadow p-4">
           <h2 className="font-semibold mb-4 text-lg border-b pb-2">Fleet & User Management</h2>
@@ -369,7 +381,12 @@ export default function AdminDashboard() {
             </div>
           </div>
         </section>
-        )}
+        ) : activeTab === 'analytics' ? (
+          /* Analytics Section */
+          <section className="mt-4">
+            <Analytics />
+          </section>
+        ) : null}
       </main>
     </div>
   );
