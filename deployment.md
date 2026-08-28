@@ -2,7 +2,7 @@
 
 This guide walks you through deploying the **ESWAMA Waste Management & Tracking System** to production using:
 1. **Neon** — Serverless cloud PostgreSQL database.
-2. **Railway** — Persistent Node.js + Socket.IO backend service.
+2. **Render / Railway** — Persistent Node.js + Socket.IO backend service.
 3. **Vercel** — Fast React (Vite) single-page application (SPA) hosting.
 
 ---

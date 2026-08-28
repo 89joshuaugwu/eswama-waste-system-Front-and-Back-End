@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS waste_reports (
     report_id       SERIAL PRIMARY KEY,
     user_id         INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     description     TEXT NOT NULL,
-    photo_url       VARCHAR(255),
+    photo_url       TEXT,
     latitude        DECIMAL(10, 7) NOT NULL,
     longitude       DECIMAL(10, 7) NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'Pending'

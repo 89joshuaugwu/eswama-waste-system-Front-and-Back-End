@@ -4,6 +4,19 @@ A full-stack, real-time web application built for the **Enugu State Waste Manage
 
 ---
 
+## 📚 Complete Project Documentation
+
+| Document | Description |
+| :--- | :--- |
+| **[Architecture Guide (`ARCHITECTURE.md`)](ARCHITECTURE.md)** | System topology, Socket.IO rooms, real-time event lifecycle & REST API catalog |
+| **[Database & Data Dictionary (`DATABASE.md`)](DATABASE.md)** | Entity-Relationship Diagram (ERD), full SQL table schemas, indexing & Haversine formula |
+| **[Authentication & Security (`AUTHENTICATION.md`)](AUTHENTICATION.md)** | JWT implementation, Bcrypt password hashing, RBAC permissions matrix & account suspension |
+| **[System Audit & Verification (`AUDIT.md`)](AUDIT.md)** | Security audit, SQL injection review, and compliance verification against final year thesis |
+| **[Live Deployment Guide (`deployment.md`)](deployment.md)** | Step-by-step instructions for Vercel (Frontend) and Render (Backend) |
+| **[Testing & Demo Guide (`testing.md`)](testing.md)** | Complete end-to-end evaluation manual with pre-seeded demo user credentials |
+
+---
+
 ## System Architecture & Features
 
 ```

@@ -1,13 +1,13 @@
 # End-to-End Testing Manual: ESWAMA Waste System
 
-This testing manual guides you through validating all user flows, role permissions, real-time WebSockets, live GPS tracking, and Google Maps integrations across the system.
+This testing manual guides you through validating all user flows, role permissions, real-time WebSockets, live GPS tracking, photo uploads, analytics dashboards, and Google Maps integrations across the system.
 
 ---
 
 ## 1. Initial Setup & Test Accounts
 
-### Step 1: Run Migration and Seed Scripts
-Make sure your backend database schema is up-to-date and populated with the default test accounts:
+### Step 1: Run Migration and Seed Scripts (Local / Neon Database)
+Ensure your database schema is up-to-date and populated with the default test accounts:
 
 ```bash
 cd backend
@@ -18,11 +18,11 @@ npm run db:seed
 ### Pre-configured Test Accounts
 All seeded accounts use the password: `password123`
 
-| User Role | Email | Password | Pre-assigned Vehicle |
-|---|---|---|---|
-| **Administrator** | `admin@eswama.gov.ng` | `password123` | N/A |
-| **Driver / Collector** | `driver@eswama.gov.ng` | `password123` | `ENU-234-XY` |
-| **Resident** | `resident@eswama.gov.ng` | `password123` | N/A |
+| User Role | Email | Password | Pre-assigned Vehicle | Live Dashboard URL |
+| :--- | :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@eswama.gov.ng` | `password123` | N/A | `https://eswama-waste.vercel.app/admin` |
+| **Driver / Collector** | `driver@eswama.gov.ng` | `password123` | `ENU-234-XY` | `https://eswama-waste.vercel.app/driver` |
+| **Resident** | `resident@eswama.gov.ng` | `password123` | N/A | `https://eswama-waste.vercel.app/resident` |
 
 ---
 
@@ -31,7 +31,7 @@ All seeded accounts use the password: `password123`
 ### Scenario 1: Admin Fleet & User Management
 **Objective:** Verify that an Admin can create new Driver accounts, suspend/reactivate them, and test account deletion safeguards.
 
-1. Navigate to `http://localhost:5173/login`.
+1. Navigate to `https://eswama-waste.vercel.app/login` (or `http://localhost:5173/login`).
 2. Log in with **Admin** credentials:
    - **Email:** `admin@eswama.gov.ng`
    - **Password:** `password123`
@@ -44,7 +44,7 @@ All seeded accounts use the password: `password123`
      - **Password:** `password123`
      - **Role:** Select `Driver`
    - Click **"Create User"**.
-   - **Expected Result:** A success message *"User created successfully"* appears, and the new driver appears in the table on the right. A vehicle record is automatically provisioned for them in the database.
+   - **Expected Result:** A success message *"User created successfully"* appears, and the new driver appears in the table on the right.
 5. **Test Account Suspension:**
    - Locate `Emeka Nwosu` in the user table.
    - Click the **"Suspend"** button next to their name.
@@ -63,7 +63,7 @@ All seeded accounts use the password: `password123`
 ### Scenario 2: Public Resident Registration & Login
 **Objective:** Verify that public signups only permit `resident` accounts and enforce security constraints.
 
-1. Open `http://localhost:5173/register` in an incognito window or log out.
+1. Open `https://eswama-waste.vercel.app/register` in an incognito window or log out.
 2. Notice that the registration form does not allow selecting Admin or Driver roles; it is restricted to residents.
 3. Fill out the registration form:
    - **Full Name:** `Ngozi Okeke`
@@ -75,33 +75,36 @@ All seeded accounts use the password: `password123`
 
 ---
 
-### Scenario 3: Resident Waste Reporting & Live Geolocation
-**Objective:** Verify HTML5 live geolocation and map pin placement for waste reporting.
+### Scenario 3: Resident Waste Reporting, Photo Upload & Live Geolocation
+**Objective:** Verify photo attachment, HTML5 live geolocation, and map pin placement for waste reporting.
 
 1. In the Resident Dashboard (`/resident`), under **"Report a Waste Issue"**:
 2. Type a description:
    ```text
    Overflowing commercial dumpster blocking access road near Holy Ghost Cathedral.
    ```
-3. **Test HTML5 Live Geolocation:**
+3. **Test Photo Upload:**
+   - Click **"Choose File"** under *Add a photo (optional)*.
+   - Select any image (`.jpg`, `.png`).
+   - **Expected Result:** An instant thumbnail preview of your selected photo appears right below the file input.
+4. **Test HTML5 Live Geolocation:**
    - Click the **"Use My Current Location"** button above the map.
-   - When the browser asks for permission (*"localhost wants to know your location"*), click **Allow**.
-   - **Expected Result:** The map automatically centers on your exact GPS coordinates and places a marker labeled *"Selected location"*.
-4. **Alternative - Manual Pin Placement:**
-   - Click anywhere on the map to place/adjust the marker if desired.
+   - When the browser asks for permission (*"wants to know your location"*), click **Allow**.
+   - **Expected Result:** The map automatically centers on your exact GPS coordinates and places a marker with green *"Location acquired!"* text.
 5. Click **"Submit Report"**.
 6. **Expected Result:** 
    - A success message *"Report submitted successfully"* appears.
-   - The new report appears in the **"Your Reports"** list on the right with a `Pending` status badge.
+   - The new report appears in the **"Your Reports"** list on the right with a `Pending` status badge and your uploaded photo displayed.
 
 ---
 
 ### Scenario 4: Admin Smart Dispatch & Google Maps Inspection
-**Objective:** Verify real-time report arrival, Google Maps inspection, and nearest-driver calculation.
+**Objective:** Verify real-time report arrival, attached photo inspection, Google Maps link, and nearest-driver calculation.
 
 1. Switch to the **Administrator** browser window (`/admin`).
 2. Under the **"Dashboard Overview"** tab:
    - Notice the new report submitted by `Ngozi Okeke` has arrived **in real time** in the **"Pending Reports"** list without refreshing the page!
+   - Notice the uploaded photo is rendered cleanly with the report.
 3. Click on the pending report:
    - The report card highlights in green.
    - **Test Google Maps Inspection:** Click the **"View on Google Maps"** link. A new tab opens showing Google Maps centered at the exact coordinates of the waste issue.
@@ -150,7 +153,33 @@ All seeded accounts use the password: `password123`
 
 ---
 
-## 3. Multi-Browser Simulation Matrix
+### Scenario 7: In-App Notification Feed (Bell Icon)
+**Objective:** Verify the real-time notification bell dropdown and read status tracking.
+
+1. Look at the top navigation bar next to your username.
+2. Notice the **Notification Bell** icon with a red numeric badge showing unread notification count.
+3. Click the bell icon:
+   - A dropdown opens displaying recent notification cards (e.g. *"Your waste report has been resolved. Thank you for reporting it."*).
+4. Click on any unread notification card.
+5. **Expected Result:** The card background turns from blue to white, and the unread count decrements by 1.
+
+---
+
+### Scenario 8: Analytics & Reporting Module
+**Objective:** Verify the Administrator's operational intelligence dashboard and Recharts visualizations.
+
+1. In the **Admin Dashboard** (`/admin`), click the **"Analytics & Reports"** tab.
+2. **Key Metric Cards:** Verify that the 3 summary metric cards reflect live data:
+   - **Pending Reports** count.
+   - **Total Resolved** count.
+   - **Avg Resolution Time** (computed in hours from report creation to task completion).
+3. **Reports Over Time (Line Chart):** Verify the 7-day timeline graph showing daily incoming volume trends.
+4. **Reports by Status (Bar Chart):** Inspect the comparative bar chart illustrating the distribution between `Pending`, `Assigned`, and `Resolved`.
+5. **Driver Performance Leaderboard:** Verify that completed tasks are accurately aggregated per driver name.
+
+---
+
+## 3. Multi-Browser Demonstration Matrix
 
 To demonstrate the full real-time power of Socket.IO during a live project defence or presentation, open 3 side-by-side browser windows:
 
@@ -162,9 +191,9 @@ To demonstrate the full real-time power of Socket.IO during a live project defen
 └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
 ```
 
-1. **Step A:** Resident clicks **"Use My Current Location"** and clicks **"Submit Report"**.
-2. **Step B:** Admin instantly sees the report pop up in **Pending Reports** with sound/visual indicator.
+1. **Step A:** Resident attaches a photo, clicks **"Use My Current Location"**, and clicks **"Submit Report"**.
+2. **Step B:** Admin instantly sees the report pop up in **Pending Reports** with photo and location.
 3. **Step C:** Admin clicks **"Assign This Driver"**.
-4. **Step D:** Driver immediately sees the task pop up on their **Route Map**.
-5. **Step E:** Driver clicks **"Track on Map"** to navigate, then clicks **"Mark as Completed"**.
-6. **Step F:** Resident immediately sees their report transition to **Resolved**.
+4. **Step D:** Driver immediately sees the task pop up on their **Route Map** and gets a notification alert.
+5. **Step E:** Driver clicks **"Track on Map"** to navigate via Google Maps, then clicks **"Mark as Completed"**.
+6. **Step F:** Resident immediately sees their report transition to **Resolved** and receives a notification in their bell feed.
