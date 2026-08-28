@@ -14,8 +14,9 @@ export default function Navbar() {
 
   return (
     <nav className="bg-eswama-dark text-white px-4 py-3 flex items-center justify-between">
-      <Link to="/" className="font-semibold text-lg">
-        ESWAMA Waste Tracker
+      <Link to="/" className="font-semibold text-lg flex items-center gap-2">
+        <img src="/logo.png" alt="ESWAMA Logo" className="h-8 w-8 object-contain rounded-full bg-white p-0.5" />
+        <span>ESWAMA Waste Tracker</span>
       </Link>
       <div className="flex items-center gap-4 text-sm">
         {user && (

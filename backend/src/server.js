@@ -18,7 +18,12 @@ const app = express();
 const server = http.createServer(app);
 
 const rawOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
-const allowedOrigins = rawOrigin === '*' ? '*' : rawOrigin.includes(',') ? rawOrigin.split(',').map(s => s.trim()) : rawOrigin;
+const allowedOrigins =
+  rawOrigin === '*'
+    ? '*'
+    : rawOrigin.includes(',')
+    ? rawOrigin.split(',').map((s) => s.trim().replace(/\/+$/, ''))
+    : rawOrigin.trim().replace(/\/+$/, '');
 
 const io = new Server(server, {
   cors: {

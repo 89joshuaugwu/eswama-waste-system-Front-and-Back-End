@@ -29,6 +29,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm bg-white shadow-md rounded-lg p-6">
+        <div className="flex justify-center mb-4">
+          <img src="/logo.png" alt="ESWAMA Logo" className="h-16 w-16 object-contain" />
+        </div>
         <h1 className="text-xl font-semibold text-center mb-6">Log in to ESWAMA Tracker</h1>
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
