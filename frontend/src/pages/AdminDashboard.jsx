@@ -11,7 +11,14 @@ export default function AdminDashboard() {
   const [suggestion, setSuggestion] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('');
   const [mapCenter, setMapCenter] = useState(null);
+
+  // User Management State
+  const [users, setUsers] = useState([]);
+  const [newUser, setNewUser] = useState({ fullName: '', email: '', phone: '', password: '', role: 'driver' });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [userMsg, setUserMsg] = useState('');
 
   async function loadReports() {
     const { data } = await api.get('/reports');
@@ -23,9 +30,19 @@ export default function AdminDashboard() {
     setVehicles(data.vehicles.filter((v) => v.latitude && v.longitude));
   }
 
+  async function loadUsers() {
+    try {
+      const { data } = await api.get('/users');
+      setUsers(data.users);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  }
+
   useEffect(() => {
     loadReports();
     loadVehicles();
+    loadUsers();
 
     const socket = getSocket();
     if (socket) {
@@ -86,6 +103,42 @@ export default function AdminDashboard() {
       setMessage(err.response?.data?.error || 'Could not assign task.');
     } finally {
       setAssigning(false);
+    }
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    setCreatingUser(true);
+    setUserMsg('');
+    try {
+      await api.post('/users', newUser);
+      setUserMsg('User created successfully.');
+      setNewUser({ fullName: '', email: '', phone: '', password: '', role: 'driver' });
+      loadUsers();
+    } catch (err) {
+      setUserMsg(err.response?.data?.error || 'Could not create user.');
+    } finally {
+      setCreatingUser(false);
+    }
+  }
+
+  async function handleToggleUserStatus(user) {
+    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
+    try {
+      await api.patch(`/users/${user.user_id}/status`, { status: newStatus });
+      loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Could not update user status.');
+    }
+  }
+
+  async function handleDeleteUser(user) {
+    if (!window.confirm(`Are you sure you want to delete ${user.full_name}?`)) return;
+    try {
+      await api.delete(`/users/${user.user_id}`);
+      loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Could not delete user.');
     }
   }
 
@@ -176,6 +229,119 @@ export default function AdminDashboard() {
                 label: `${v.driver_name} - ${v.plate_number} (${v.zone})`,
               }))}
             />
+          </div>
+        </section>
+
+        {/* User Management Section */}
+        <section className="bg-white rounded-lg shadow p-4 lg:col-span-3">
+          <h2 className="font-semibold mb-4 text-lg border-b pb-2">Fleet & User Management</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="md:col-span-1 border-r pr-4">
+              <h3 className="font-medium mb-3">Add New User</h3>
+              <form onSubmit={handleCreateUser} className="space-y-3">
+                <input
+                  required
+                  placeholder="Full Name"
+                  value={newUser.fullName}
+                  onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-eswama-green"
+                />
+                <input
+                  required
+                  type="email"
+                  placeholder="Email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-eswama-green"
+                />
+                <input
+                  required
+                  placeholder="Phone"
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-eswama-green"
+                />
+                <input
+                  required
+                  type="password"
+                  placeholder="Password (min 6 chars)"
+                  minLength={6}
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-eswama-green"
+                />
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-eswama-green"
+                >
+                  <option value="driver">Driver</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={creatingUser}
+                  className="w-full bg-eswama-green text-white py-2 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+                >
+                  {creatingUser ? 'Creating...' : 'Create User'}
+                </button>
+                {userMsg && <p className="text-sm mt-2 text-eswama-dark">{userMsg}</p>}
+              </form>
+            </div>
+            
+            <div className="md:col-span-2">
+              <h3 className="font-medium mb-3">All Users ({users.length})</h3>
+              <div className="overflow-x-auto h-80 overflow-y-auto border rounded-md">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-gray-50 border-b sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Name</th>
+                      <th className="px-4 py-2 font-medium">Role</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 font-medium">Joined</th>
+                      <th className="px-4 py-2 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {users.map((u) => (
+                      <tr key={u.user_id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">
+                          <p className="font-medium">{u.full_name}</p>
+                          <p className="text-xs text-gray-500">{u.email}</p>
+                        </td>
+                        <td className="px-4 py-2 capitalize">{u.role}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            u.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {u.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-gray-500 text-xs">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-2 text-right space-x-2">
+                          {u.role !== 'resident' && (
+                            <button
+                              onClick={() => handleToggleUserStatus(u)}
+                              className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                            >
+                              {u.status === 'Active' ? 'Suspend' : 'Activate'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteUser(u)}
+                            className="text-xs px-2 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
       </main>

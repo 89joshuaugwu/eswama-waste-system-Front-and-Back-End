@@ -73,6 +73,10 @@ async function login(req, res) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    if (user.status === 'Suspended') {
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact the administrator.' });
+    }
+
     const token = signToken({ userId: user.user_id, role: user.role, fullName: user.full_name });
 
     return res.json({
@@ -159,4 +163,69 @@ async function createUser(req, res) {
   }
 }
 
-module.exports = { register, login, me, createUser };
+async function listUsers(req, res) {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only administrators can list users.' });
+    }
+    const result = await pool.query(
+      "SELECT user_id, full_name, email, phone, role, status, created_at FROM users ORDER BY created_at DESC"
+    );
+    return res.json({ users: result.rows });
+  } catch (err) {
+    console.error('listUsers error:', err);
+    return res.status(500).json({ error: 'Could not fetch users.' });
+  }
+}
+
+async function updateUserStatus(req, res) {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only administrators can update user status.' });
+    }
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['Active', 'Suspended'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be Active or Suspended.' });
+    }
+    
+    const result = await pool.query(
+      "UPDATE users SET status = $1 WHERE user_id = $2 RETURNING user_id, full_name, email, role, status",
+      [status, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    return res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error('updateUserStatus error:', err);
+    return res.status(500).json({ error: 'Could not update user status.' });
+  }
+}
+
+async function deleteUser(req, res) {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only administrators can delete users.' });
+    }
+    const { id } = req.params;
+    
+    // Attempt to delete user. Will throw error if foreign key constraints fail.
+    const result = await pool.query("DELETE FROM users WHERE user_id = $1 RETURNING user_id", [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    return res.json({ message: 'User deleted successfully.' });
+  } catch (err) {
+    console.error('deleteUser error:', err);
+    // 23503 is the PostgreSQL error code for foreign_key_violation
+    if (err.code === '23503') {
+      return res.status(409).json({ error: 'Cannot delete this user because they have assigned tasks or historical records. Please suspend them instead.' });
+    }
+    return res.status(500).json({ error: 'Could not delete user.' });
+  }
+}
+
+module.exports = { register, login, me, createUser, listUsers, updateUserStatus, deleteUser };
