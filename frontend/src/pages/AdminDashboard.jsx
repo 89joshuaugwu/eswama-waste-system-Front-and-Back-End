@@ -11,7 +11,6 @@ export default function AdminDashboard() {
   const [suggestion, setSuggestion] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [message, setMessage] = useState('');
-  const [message, setMessage] = useState('');
   const [mapCenter, setMapCenter] = useState(null);
 
   // User Management State
