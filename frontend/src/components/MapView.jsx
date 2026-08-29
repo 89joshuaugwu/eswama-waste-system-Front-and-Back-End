@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -14,6 +14,18 @@ L.Icon.Default.mergeOptions({
 // Default center: Enugu, Nigeria
 const DEFAULT_CENTER = [6.5244, 7.5186];
 
+const MAP_PROVIDERS = {
+  primary: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  fallback: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+    maxZoom: 19,
+  }
+};
+
 function ClickToSetLocation({ onSelect }) {
   useMapEvents({
     click(e) {
@@ -28,6 +40,15 @@ function ClickToSetLocation({ onSelect }) {
  * onSelectLocation: optional callback(lat, lng) enabling click-to-pick mode
  */
 export default function MapView({ markers = [], center, zoom = 13, onSelectLocation }) {
+  const [provider, setProvider] = useState(MAP_PROVIDERS.primary);
+
+  const handleTileError = () => {
+    if (provider.url === MAP_PROVIDERS.primary.url) {
+      console.warn('Primary map tiles failed to load (network issue). Switching to fallback provider.');
+      setProvider(MAP_PROVIDERS.fallback);
+    }
+  };
+
   return (
     <MapContainer
       center={center || DEFAULT_CENTER}
@@ -36,8 +57,13 @@ export default function MapView({ markers = [], center, zoom = 13, onSelectLocat
       className="h-full w-full rounded-lg"
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        key={provider.url} // Force re-render of TileLayer when URL changes
+        attribution={provider.attribution}
+        url={provider.url}
+        maxZoom={provider.maxZoom || 18}
+        eventHandlers={{
+          tileerror: handleTileError,
+        }}
       />
       {onSelectLocation && <ClickToSetLocation onSelect={onSelectLocation} />}
       {markers.map((m) => (
