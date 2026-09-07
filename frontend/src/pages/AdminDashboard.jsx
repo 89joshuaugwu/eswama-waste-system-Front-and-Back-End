@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
+import PickupSchedule from '../components/PickupSchedule.jsx';
 import MapView from '../components/MapView.jsx';
 import api from '../api/client';
 import { getSocket } from '../api/socket';
@@ -150,7 +151,8 @@ export default function AdminDashboard() {
       <Navbar />
       
       <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 flex gap-4">
+        <div className="max-w-6xl mx-auto px-4 flex gap-4 overflow-x-auto">
+          <button onClick={() => setActiveTab('pickups')} className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'pickups' ? 'border-eswama-green text-eswama-green' : 'border-transparent text-gray-500'}`}>Pickup days</button>
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`py-3 px-2 border-b-2 font-medium text-sm transition ${
@@ -179,9 +181,15 @@ export default function AdminDashboard() {
       </div>
 
       <main className="max-w-6xl mx-auto p-4">
+        <header className="pt-4 pb-6">
+          <p className="text-xs uppercase tracking-widest font-semibold text-emerald-700">Administration</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 mt-2">Collection operations</h1>
+          <p className="text-slate-500 mt-2">Coordinate your fleet, plan pickup days, and keep your community informed.</p>
+        </header>
+        {activeTab === 'pickups' && <PickupSchedule admin />}
         {activeTab === 'dashboard' ? (
           <div className="grid gap-6 lg:grid-cols-3">
-            <section className="bg-white rounded-lg shadow p-4 lg:col-span-1">
+            <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:col-span-1">
           <h2 className="font-semibold mb-3">Pending Reports ({pendingReports.length})</h2>
           <ul className="space-y-2 max-h-[32rem] overflow-y-auto">
             {pendingReports.length === 0 && (
@@ -245,7 +253,7 @@ export default function AdminDashboard() {
           {message && !selectedReport && <p className="text-sm mt-3 text-eswama-dark">{message}</p>}
         </section>
 
-        <section className="bg-white rounded-lg shadow p-4 lg:col-span-2 h-[36rem]">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:col-span-2 h-[36rem]">
           <div className="flex justify-between items-center mb-3">
             <h2 className="font-semibold">Live Fleet Map</h2>
             <button
@@ -270,7 +278,7 @@ export default function AdminDashboard() {
         </div>
         ) : activeTab === 'users' ? (
         /* User Management Section */
-        <section className="bg-white rounded-lg shadow p-4">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <h2 className="font-semibold mb-4 text-lg border-b pb-2">Fleet & User Management</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-1 border-r pr-4">

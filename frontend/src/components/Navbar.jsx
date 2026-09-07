@@ -13,12 +13,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-eswama-dark text-white px-4 py-3 flex items-center justify-between">
-      <Link to="/" className="font-semibold text-lg flex items-center gap-2">
+    <nav className="relative z-[1200] bg-eswama-dark text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3 shadow-sm">
+      <Link to="/" className="font-semibold text-sm sm:text-lg flex items-center gap-2">
         <img src="/logo.png" alt="ESWAMA Logo" className="h-8 w-8 object-contain rounded-full bg-white p-0.5" />
-        <span>ESWAMA Waste Tracker</span>
+        <span>ESWAMA<span className="hidden sm:inline"> Waste Tracker</span></span>
       </Link>
-      <div className="flex items-center gap-4 text-sm">
+      <div className="flex items-center gap-3 sm:gap-4 text-sm">
         {user && (
           <>
             <NotificationBell user={user} />

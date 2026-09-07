@@ -4,6 +4,7 @@
   "description": "Backend API for the Real Time Web-Based Waste Management and Tracking System (ESWAMA)",
   "main": "src/server.js",
   "scripts": {
+    "test": "node --test",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "db:migrate": "node db/migrate.js",
@@ -20,6 +21,7 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "nodemon": "^3.1.0"
   },
   "engines": {

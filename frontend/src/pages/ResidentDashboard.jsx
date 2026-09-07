@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
+import PickupSchedule from '../components/PickupSchedule.jsx';
 import MapView from '../components/MapView.jsx';
 import api from '../api/client';
 import { getSocket } from '../api/socket';
@@ -101,7 +102,13 @@ export default function ResidentDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="max-w-5xl mx-auto p-4 grid gap-6 md:grid-cols-2">
-        <section className="bg-white rounded-lg shadow p-4">
+        <header className="md:col-span-2 pt-4">
+          <p className="text-xs uppercase tracking-widest font-semibold text-emerald-700">Resident portal</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 mt-2">A cleaner community starts here.</h1>
+          <p className="text-slate-500 mt-2">Plan for your next pickup and keep track of the issues you report.</p>
+        </header>
+        <div className="md:col-span-2"><PickupSchedule /></div>
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <h2 className="font-semibold mb-3">Report a Waste Issue</h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <textarea
@@ -155,7 +162,7 @@ export default function ResidentDashboard() {
           </form>
         </section>
 
-        <section className="bg-white rounded-lg shadow p-4">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <h2 className="font-semibold mb-3">Your Reports</h2>
           <ul className="space-y-3 max-h-[28rem] overflow-y-auto">
             {reports.length === 0 && <p className="text-sm text-gray-500">No reports submitted yet.</p>}

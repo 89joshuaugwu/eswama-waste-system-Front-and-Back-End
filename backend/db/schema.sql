@@ -67,3 +67,19 @@ CREATE INDEX IF NOT EXISTS idx_collection_tasks_driver ON collection_tasks(drive
 CREATE INDEX IF NOT EXISTS idx_collection_tasks_status ON collection_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_vehicle_locations_vehicle ON vehicle_locations(vehicle_id, recorded_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
+
+-- One recurring collection window per weekday (0 = Sunday), in Africa/Lagos.
+CREATE TABLE IF NOT EXISTS pickup_schedules (
+    schedule_id SERIAL PRIMARY KEY,
+    weekday INTEGER NOT NULL UNIQUE CHECK (weekday BETWEEN 0 AND 6),
+    pickup_time TIME NOT NULL,
+    notes VARCHAR(500) NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Keep the delivery key independent of schedules so editing/recreating a day
+-- cannot send duplicate reminders. Existing notifications remain compatible.
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS pickup_date DATE;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notifications_pickup_day
+    ON notifications(user_id, pickup_date) WHERE pickup_date IS NOT NULL;

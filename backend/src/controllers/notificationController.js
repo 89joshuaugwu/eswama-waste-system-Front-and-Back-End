@@ -1,7 +1,9 @@
 const pool = require('../config/db');
+const { sendPickupReminders } = require('../services/pickupReminders');
 
 async function listNotifications(req, res) {
   try {
+    if (req.user.role === 'resident') await sendPickupReminders(req.app.get('io'), req.user.userId);
     const result = await pool.query(
       'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50',
       [req.user.userId]

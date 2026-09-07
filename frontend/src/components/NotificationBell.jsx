@@ -5,34 +5,44 @@ import { getSocket } from '../api/socket';
 export default function NotificationBell({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
+    let active = true;
     async function loadNotifications() {
       try {
         const { data } = await api.get('/notifications');
-        setNotifications(data.notifications);
-        setUnreadCount(data.notifications.filter((n) => !n.is_read).length);
+        if (active) setNotifications(data.notifications);
       } catch (err) {
         console.error('Failed to load notifications', err);
       }
     }
     loadNotifications();
+    const timer = setInterval(loadNotifications, 60000);
+    window.addEventListener('focus', loadNotifications);
 
     const socket = getSocket();
+    const handleNewNotification = () => loadNotifications();
     if (socket) {
       // Reload on any relevant event to keep it simple, or push directly.
-      const handleNewNotification = () => loadNotifications();
+      socket.on('notification:new', handleNewNotification);
+      socket.on('connect', handleNewNotification);
       socket.on('report:new', handleNewNotification);
       socket.on('task:assigned', handleNewNotification);
       socket.on('report:resolved', handleNewNotification);
 
-      return () => {
-        socket.off('report:new', handleNewNotification);
-        socket.off('task:assigned', handleNewNotification);
-        socket.off('report:resolved', handleNewNotification);
-      };
     }
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener('focus', loadNotifications);
+      if (!socket) return;
+      socket.off('notification:new', handleNewNotification);
+      socket.off('connect', handleNewNotification);
+      socket.off('report:new', handleNewNotification);
+      socket.off('task:assigned', handleNewNotification);
+      socket.off('report:resolved', handleNewNotification);
+    };
   }, [user]);
 
   async function markAsRead(id) {
@@ -41,7 +51,6 @@ export default function NotificationBell({ user }) {
       setNotifications((prev) =>
         prev.map((n) => (n.notification_id === id ? { ...n, is_read: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Failed to mark as read', err);
     }
@@ -50,6 +59,8 @@ export default function NotificationBell({ user }) {
   return (
     <div className="relative">
       <button
+        aria-label={`Notifications, ${unreadCount} unread`}
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-white hover:text-eswama-green focus:outline-none"
       >
@@ -64,7 +75,7 @@ export default function NotificationBell({ user }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20 border">
+        <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:top-auto sm:w-80 mt-2 bg-white rounded-xl shadow-lg overflow-hidden z-[1100] border border-slate-200">
           <div className="bg-gray-50 px-4 py-2 border-b">
             <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
           </div>

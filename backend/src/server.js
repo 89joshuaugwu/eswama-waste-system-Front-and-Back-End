@@ -52,6 +52,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/pickups', require('./routes/pickupRoutes'));
 
 // 404 handler
 app.use((req, res) => {
@@ -65,6 +66,8 @@ app.use((err, req, res, next) => {
 });
 
 initSockets(io);
+const pickupTimer = require('./services/pickupReminders').startPickupReminders(io);
+server.on('close', () => clearInterval(pickupTimer));
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
